@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/prizelobby/ebitengine-template/core"
 	"github.com/prizelobby/ebitengine-template/res"
 	"github.com/prizelobby/ebitengine-template/scene"
@@ -32,6 +34,10 @@ type EbitenGame struct {
 }
 
 func (g *EbitenGame) Update() error {
+	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+		os.Exit(0)
+	}
+
 	g.SceneManager.Update()
 	return nil
 }
@@ -50,7 +56,7 @@ func (g *EbitenGame) Layout(outsideWidth, outsideHeight int) (screenWidth, scree
 }
 
 func (g *EbitenGame) LayoutF(outsideWidth, outsideHeight float64) (screenWidth, screenHeight float64) {
-	scale := ebiten.DeviceScaleFactor()
+	scale := ebiten.Monitor().DeviceScaleFactor()
 	canvasWidth := GAME_WIDTH * scale
 	canvasHeight := GAME_HEIGHT * scale
 	return canvasWidth, canvasHeight
