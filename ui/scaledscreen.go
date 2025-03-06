@@ -6,7 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/tinne26/etxt"
-	"github.com/tinne26/etxt/efixed"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -15,20 +14,20 @@ type ScaledScreen struct {
 	scaleFactor    float64
 	Etxt           *etxt.Renderer
 	debugPrintLoc  fixed.Point26_6
-	debugPrintSize int
+	debugPrintSize float64
 }
 
 func NewScaledScreen(renderer *etxt.Renderer) *ScaledScreen {
 	return &ScaledScreen{
 		Etxt:           renderer,
-		scaleFactor:    ebiten.DeviceScaleFactor(),
-		debugPrintSize: int(16 * ebiten.DeviceScaleFactor()),
+		scaleFactor:    ebiten.Monitor().DeviceScaleFactor(),
+		debugPrintSize: 16 * ebiten.Monitor().DeviceScaleFactor(),
 	}
 }
 
 func (s *ScaledScreen) SetTarget(t *ebiten.Image) {
 	s.Screen = t
-	s.Etxt.SetTarget(t)
+	//s.Etxt.SetTarget(t)
 	s.debugPrintLoc = fixed.Point26_6{X: 0, Y: 0}
 }
 
@@ -44,6 +43,16 @@ func (s *ScaledScreen) DrawRect(x, y, w, h float64, color color.Color) {
 	ww := float32(w * s.scaleFactor)
 
 	vector.DrawFilledRect(s.Screen, xx, yy, ww, hh, color, false)
+}
+
+func (s *ScaledScreen) DrawUnfilledRect(x, y, w, h, strokeWidth float64, color color.Color) {
+	xx := float32(x * s.scaleFactor)
+	yy := float32(y * s.scaleFactor)
+	hh := float32(h * s.scaleFactor)
+	ww := float32(w * s.scaleFactor)
+	sw := float32(strokeWidth * s.scaleFactor)
+
+	vector.StrokeRect(s.Screen, xx, yy, ww, hh, sw, color, false)
 }
 
 func (s *ScaledScreen) DrawCircle(cx, cy, r float64, color color.Color) {
@@ -62,14 +71,15 @@ func (s *ScaledScreen) DrawRectShader(w, h int, shader *ebiten.Shader, opts *ebi
 	s.Screen.DrawRectShader(ww, hh, shader, opts)
 }
 
-func (s *ScaledScreen) scaledTextSize(size float64) int {
-	return int(size * s.scaleFactor)
+func (s *ScaledScreen) scaledTextSize(size float64) float64 {
+	return size * s.scaleFactor
 }
 
 func (s *ScaledScreen) TextSelectionRectSize(t string, size float64) (float64, float64) {
-	s.Etxt.SetSizePx(s.scaledTextSize(size))
-	r := s.Etxt.SelectionRect(t)
-	return efixed.ToFloat64(r.Width), efixed.ToFloat64(r.Height)
+	s.Etxt.SetSize(s.scaledTextSize(size))
+	r := s.Etxt.Measure(t)
+	//return efixed.ToFloat64(r.Width), efixed.ToFloat64(r.Height)
+	return r.Width().ToFloat64(), r.Height().ToFloat64()
 }
 
 func (s *ScaledScreen) DrawText(t string, size float64, x, y int, color color.Color) {
@@ -77,9 +87,9 @@ func (s *ScaledScreen) DrawText(t string, size float64, x, y int, color color.Co
 	yy := int(float64(y) * s.scaleFactor)
 
 	s.Etxt.SetColor(color)
-	s.Etxt.SetSizePx(s.scaledTextSize(size))
-	s.Etxt.SetAlign(etxt.Top, etxt.Left)
-	s.Etxt.Draw(t, xx, yy)
+	s.Etxt.SetSize(s.scaledTextSize(size))
+	s.Etxt.SetAlign(etxt.Top | etxt.Left)
+	s.Etxt.Draw(s.Screen, t, xx, yy)
 }
 
 func (s *ScaledScreen) DrawTextCenteredAt(t string, size float64, x, y int, color color.Color) {
@@ -87,29 +97,29 @@ func (s *ScaledScreen) DrawTextCenteredAt(t string, size float64, x, y int, colo
 	yy := int(float64(y) * s.scaleFactor)
 
 	s.Etxt.SetColor(color)
-	s.Etxt.SetSizePx(s.scaledTextSize(size))
-	s.Etxt.SetAlign(etxt.YCenter, etxt.XCenter)
-	s.Etxt.Draw(t, xx, yy)
+	s.Etxt.SetSize(s.scaledTextSize(size))
+	s.Etxt.SetAlign(etxt.HorzCenter | etxt.VertCenter)
+	s.Etxt.Draw(s.Screen, t, xx, yy)
 }
 
-func (s *ScaledScreen) DrawTextWithAlign(t string, size float64, x, y int, color color.Color, vAlign etxt.VertAlign, hAlign etxt.HorzAlign) {
+func (s *ScaledScreen) DrawTextWithAlign(t string, size float64, x, y int, color color.Color, vAlign etxt.Align, hAlign etxt.Align) {
 	xx := int(float64(x) * s.scaleFactor)
 	yy := int(float64(y) * s.scaleFactor)
 
 	s.Etxt.SetColor(color)
-	s.Etxt.SetSizePx(s.scaledTextSize(size))
-	s.Etxt.SetAlign(vAlign, hAlign)
-	s.Etxt.Draw(t, xx, yy)
+	s.Etxt.SetSize(s.scaledTextSize(size))
+	s.Etxt.SetAlign(vAlign | hAlign)
+	s.Etxt.Draw(s.Screen, t, xx, yy)
 }
 
 func (s *ScaledScreen) DebugPrint(str string) {
-	s.Etxt.SetSizePx(s.debugPrintSize)
-	s.Etxt.SetAlign(etxt.Top, etxt.Left)
+	s.Etxt.SetSize(s.debugPrintSize)
+	s.Etxt.SetAlign(etxt.Top | etxt.Left)
 	s.Etxt.SetColor(color.White)
-	s.debugPrintLoc = s.Etxt.Draw(str+"\n", s.debugPrintLoc.X.Ceil(), s.debugPrintLoc.Y.Ceil())
+	//s.debugPrintLoc = s.Etxt.Draw(s.Screen, str+"\n", s.debugPrintLoc.X.Ceil(), s.debugPrintLoc.Y.Ceil())
 }
 
 func AdjustedCursorPosition() (float64, float64) {
 	cx, cy := ebiten.CursorPosition()
-	return float64(cx) / ebiten.DeviceScaleFactor(), float64(cy) / ebiten.DeviceScaleFactor()
+	return float64(cx) / ebiten.Monitor().DeviceScaleFactor(), float64(cy) / ebiten.Monitor().DeviceScaleFactor()
 }

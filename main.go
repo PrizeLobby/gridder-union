@@ -67,12 +67,11 @@ func main() {
 	game := core.NewGame()
 
 	// create a new text renderer and configure it
-	txtRenderer := etxt.NewStdRenderer()
-	glyphsCache := etxt.NewDefaultCache(10 * 1024 * 1024) // 10MB
-	txtRenderer.SetCacheHandler(glyphsCache.NewHandler())
+	txtRenderer := etxt.NewRenderer()
+	txtRenderer.Utils().SetCache8MiB()
 	txtRenderer.SetFont(res.GetFont("Roboto-Medium"))
-	txtRenderer.SetAlign(etxt.YCenter, etxt.XCenter)
-	txtRenderer.SetSizePx(64)
+	txtRenderer.SetAlign(etxt.HorzCenter | etxt.VertCenter)
+	txtRenderer.SetSize(64)
 
 	scaledScreen := ui.NewScaledScreen(txtRenderer)
 
