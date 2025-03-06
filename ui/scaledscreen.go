@@ -6,14 +6,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/tinne26/etxt"
-	"golang.org/x/image/math/fixed"
+	"github.com/tinne26/etxt/fract"
 )
 
 type ScaledScreen struct {
 	Screen         *ebiten.Image
 	scaleFactor    float64
 	Etxt           *etxt.Renderer
-	debugPrintLoc  fixed.Point26_6
+	debugPrintLoc  fract.Point
 	debugPrintSize float64
 }
 
@@ -27,8 +27,7 @@ func NewScaledScreen(renderer *etxt.Renderer) *ScaledScreen {
 
 func (s *ScaledScreen) SetTarget(t *ebiten.Image) {
 	s.Screen = t
-	//s.Etxt.SetTarget(t)
-	s.debugPrintLoc = fixed.Point26_6{X: 0, Y: 0}
+	s.debugPrintLoc = fract.IntsToPoint(0, 0)
 }
 
 func (s *ScaledScreen) DrawImage(image *ebiten.Image, options *ebiten.DrawImageOptions) {
@@ -78,7 +77,6 @@ func (s *ScaledScreen) scaledTextSize(size float64) float64 {
 func (s *ScaledScreen) TextSelectionRectSize(t string, size float64) (float64, float64) {
 	s.Etxt.SetSize(s.scaledTextSize(size))
 	r := s.Etxt.Measure(t)
-	//return efixed.ToFloat64(r.Width), efixed.ToFloat64(r.Height)
 	return r.Width().ToFloat64(), r.Height().ToFloat64()
 }
 
@@ -116,7 +114,9 @@ func (s *ScaledScreen) DebugPrint(str string) {
 	s.Etxt.SetSize(s.debugPrintSize)
 	s.Etxt.SetAlign(etxt.Top | etxt.Left)
 	s.Etxt.SetColor(color.White)
-	//s.debugPrintLoc = s.Etxt.Draw(s.Screen, str+"\n", s.debugPrintLoc.X.Ceil(), s.debugPrintLoc.Y.Ceil())
+	r := s.Etxt.Measure(str)
+	s.Etxt.Draw(s.Screen, str+"\n", s.debugPrintLoc.X.ToInt(), s.debugPrintLoc.Y.ToInt())
+	s.debugPrintLoc = s.debugPrintLoc.AddUnits(fract.FromInt(0), r.Height())
 }
 
 func AdjustedCursorPosition() (float64, float64) {
