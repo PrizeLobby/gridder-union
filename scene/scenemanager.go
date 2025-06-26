@@ -3,7 +3,7 @@ package scene
 import (
 	"errors"
 
-	"github.com/prizelobby/ebitengine-template/ui"
+	"github.com/prizelobby/union-gridder/ui"
 )
 
 type Scene interface {

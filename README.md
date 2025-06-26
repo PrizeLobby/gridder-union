@@ -1,5 +1,10 @@
-Template ebitengine project
+## Gridder Union
+Drag and drop letters onto the grid such that the union of letters in each row and column match the targets.
 
+## Build for web
+```
+env GOOS=js GOARCH=wasm go build -o web/gridderunion.wasm github.com/prizelobby/gridder-union
+```
 
 ## Credits
 

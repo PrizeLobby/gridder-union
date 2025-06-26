@@ -1,6 +1,6 @@
 package scene
 
-import "github.com/prizelobby/ebitengine-template/ui"
+import "github.com/prizelobby/union-gridder/ui"
 
 type BaseScene struct {
 	SceneManager *SceneManager

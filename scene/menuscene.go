@@ -5,11 +5,13 @@ import (
 	"log"
 	"math"
 
+	"github.com/prizelobby/union-gridder/res"
+
+	"github.com/prizelobby/union-gridder/ui"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/prizelobby/ebitengine-template/res"
-	"github.com/prizelobby/ebitengine-template/ui"
 	"github.com/tinne26/etxt"
 )
 
@@ -53,7 +55,7 @@ func (m *MenuScene) Update() {
 	cursorX, cursorY := ui.AdjustedCursorPosition()
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if math.Abs(cursorX-CENTER) < 100 && math.Abs(cursorY-PLAYING_Y_CENTER) < 50 {
-			m.SceneManager.SwitchToScene("playing")
+			m.SceneManager.SwitchToScene("game")
 			player := m.AudioContext.NewPlayerFromBytes(m.Sound)
 			player.Play()
 			m.BgmPlayer.Close()

@@ -7,14 +7,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/prizelobby/ebitengine-template/core"
-	"github.com/prizelobby/ebitengine-template/res"
-	"github.com/prizelobby/ebitengine-template/scene"
-	"github.com/prizelobby/ebitengine-template/ui"
+	"github.com/prizelobby/union-gridder/config"
+	"github.com/prizelobby/union-gridder/core"
+	"github.com/prizelobby/union-gridder/res"
+	"github.com/prizelobby/union-gridder/scene"
+	"github.com/prizelobby/union-gridder/ui"
 	"github.com/tinne26/etxt"
 )
 
-const GAME_WIDTH = 1280
+const GAME_WIDTH = 960
 const GAME_HEIGHT = 720
 
 const SAMPLE_RATE = 48000
@@ -34,8 +35,10 @@ type EbitenGame struct {
 }
 
 func (g *EbitenGame) Update() error {
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
-		os.Exit(0)
+	if config.DEBUG {
+		if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+			os.Exit(0)
+		}
 	}
 
 	g.SceneManager.Update()
@@ -63,8 +66,10 @@ func (g *EbitenGame) LayoutF(outsideWidth, outsideHeight float64) (screenWidth, 
 }
 
 func main() {
+	args := os.Args[1:]
 	audioContext := audio.NewContext(SAMPLE_RATE)
 	game := core.NewGame()
+	game.Reset()
 
 	// create a new text renderer and configure it
 	txtRenderer := etxt.NewRenderer()
@@ -85,12 +90,17 @@ func main() {
 	gameScene := scene.NewGameScene(game)
 	sm.AddScene("menu", menuScene)
 	sm.AddScene("credits", creditsScene)
-	sm.AddScene("playing", gameScene)
+	sm.AddScene("game", gameScene)
 	g.SceneManager = sm
-	sm.SwitchToScene("menu")
+
+	if len(args) > 0 {
+		g.SceneManager.SwitchToScene(args[0])
+	} else {
+		g.SceneManager.SwitchToScene("game")
+	}
 
 	ebiten.SetWindowSize(GAME_WIDTH, GAME_HEIGHT)
-	ebiten.SetWindowTitle("EBITENGINE TEMPLATE")
+	ebiten.SetWindowTitle("Gridder Union")
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}

@@ -2,7 +2,8 @@ package util
 
 import (
 	"math"
-	"math/rand"
+	"math/rand/v2"
+	"slices"
 
 	"golang.org/x/exp/constraints"
 )
@@ -84,7 +85,7 @@ func FilteredChoice[T any](s []T, f func(T) bool, rand *rand.Rand) T {
 	for _, o := range s {
 		if f(o) {
 			seen += 1
-			if rand.Intn(seen) == 0 {
+			if rand.IntN(seen) == 0 {
 				ret = o
 			}
 		}
@@ -92,12 +93,21 @@ func FilteredChoice[T any](s []T, f func(T) bool, rand *rand.Rand) T {
 	return ret
 }
 
-func Choice[T any](s []T, rand *rand.Rand) T {
+func Choice[T any](s []T, filter func(T) bool, rand *rand.Rand) T {
 	if len(s) == 0 {
 		panic("Cannot make choice from 0 length slice")
 	}
-	r := rand.Intn(len(s))
-	return s[r]
+	var ret T
+	seen := 0
+	for _, o := range s {
+		if filter(o) {
+			seen += 1
+			if rand.IntN(seen) == 0 {
+				ret = o
+			}
+		}
+	}
+	return ret
 }
 
 func MinItem[T any](s []T, f func(t T) int) T {
@@ -114,6 +124,63 @@ func MinItem[T any](s []T, f func(t T) int) T {
 		}
 	}
 	return best
+}
+
+func FakePerutations[T any](s []T, rand *rand.Rand) [][]T {
+	var out [][]T
+	for range 1 {
+		new := make([]T, len(s))
+		copy(new, s)
+		rand.Shuffle(len(new), func(i, j int) {
+			new[i], new[j] = new[j], new[i]
+		})
+		out = append(out, new)
+	}
+	return out
+}
+
+func Permutations[T any](s []T) [][]T {
+	if len(s) == 0 {
+		return [][]T{{}}
+	}
+	var out [][]T
+	for i, v := range s {
+		rest := make([]T, len(s)-1)
+		copy(rest, s[:i])
+		copy(rest[len(rest):], s[i+1:])
+
+		for _, p := range Permutations(rest) {
+			out = append(out, append([]T{v}, p...))
+		}
+	}
+	return out
+}
+
+func Union[T comparable](a, b []T) []T {
+	m := make(map[T]struct{})
+	for _, v := range a {
+		m[v] = struct{}{}
+	}
+	for _, v := range b {
+		m[v] = struct{}{}
+	}
+	out := make([]T, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+func StringsUnion(input ...string) string {
+	if len(input) == 0 {
+		return ""
+	}
+	out := []byte(input[0])
+	for i := 1; i < len(input); i++ {
+		out = Union(out, []byte(input[i]))
+	}
+	slices.Sort(out)
+	return string(out)
 }
 
 type LocRect struct {

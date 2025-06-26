@@ -3,9 +3,10 @@ package scene
 import (
 	"image/color"
 
+	"github.com/prizelobby/union-gridder/ui"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/prizelobby/ebitengine-template/ui"
 )
 
 type CreditsScene struct {

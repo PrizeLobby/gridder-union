@@ -1,4 +1,4 @@
-module github.com/prizelobby/ebitengine-template
+module github.com/prizelobby/union-gridder
 
 go 1.24
 
