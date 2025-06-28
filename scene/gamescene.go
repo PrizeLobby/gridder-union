@@ -21,14 +21,25 @@ type GameScene struct {
 	Game          *core.Game
 	Setsprites    []*ui.SetSprite
 	Droplocations []*ui.DropLocation
-	Colors        [6][]color.Color
+	MatchColors   [6][]color.Color
+	ExtraColors   [9][]color.Color
 	Stroke        *ui.Stroke
 }
 
 func NewGameScene(game *core.Game) *GameScene {
+	g := &GameScene{
+		Game: game,
+	}
+
+	g.Reset()
+	return g
+}
+
+func (g *GameScene) Reset() {
+	g.Game.Reset()
 	setSprites := make([]*ui.SetSprite, 0, core.NUM_SETS)
 
-	for i, s := range game.Sets {
+	for i, s := range g.Game.Sets {
 		setSprites = append(setSprites, &ui.SetSprite{
 			SpriteName: s,
 			X:          SET_START_X,
@@ -49,38 +60,38 @@ func NewGameScene(game *core.Game) *GameScene {
 		}
 	}
 
-	colors := [6][]color.Color{}
+	matchColors := [6][]color.Color{}
 	for i := range 6 {
-		colors[i] = make([]color.Color, len(game.Targets[i]))
-		for j := range len(colors[i]) {
-			colors[i][j] = color.RGBA{0, 0, 0, 255}
+		matchColors[i] = make([]color.Color, len(g.Game.Targets[i]))
+		for j := range len(matchColors[i]) {
+			matchColors[i][j] = color.RGBA{0, 0, 0, 255}
 		}
 	}
+	g.ExtraColors = [9][]color.Color{}
 
-	return &GameScene{
-		Game:          game,
-		Setsprites:    setSprites,
-		Droplocations: dropLocations,
-		Colors:        colors,
-	}
+	g.Setsprites = setSprites
+	g.Droplocations = dropLocations
+	g.MatchColors = matchColors
 }
 
 func (g *GameScene) Draw(screen *ui.ScaledScreen) {
 	screen.Screen.Fill(color.RGBA{230, 228, 213, 255})
+
 	for _, loc := range g.Droplocations {
-		loc.Draw(screen)
+		loc.Draw(screen, g.ExtraColors[loc.Index])
 	}
 	screen.DrawTextCenteredAt("Gridder Union", 64, 960/2, 60, color.Black)
-	screen.DrawTextWithColors(string(g.Game.Targets[0]), 32, 740, 120+60-ui.SetSpriteHeight/2, g.Colors[0])
-	screen.DrawTextWithColors(string(g.Game.Targets[1]), 32, 740, 120+180+60-ui.SetSpriteHeight/2, g.Colors[1])
-	screen.DrawTextWithColors(string(g.Game.Targets[2]), 32, 740, 120+2*180+60-ui.SetSpriteHeight/2, g.Colors[2])
-	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[3]), 32, 960/2-180, 630, g.Colors[3])
-	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[4]), 32, 960/2, 630, g.Colors[4])
-	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[5]), 32, 960/2+180, 630, g.Colors[5])
+	screen.DrawTextWithColors(string(g.Game.Targets[0]), 32, 740, 120+60-ui.SetSpriteHeight/2, g.MatchColors[0])
+	screen.DrawTextWithColors(string(g.Game.Targets[1]), 32, 740, 120+180+60-ui.SetSpriteHeight/2, g.MatchColors[1])
+	screen.DrawTextWithColors(string(g.Game.Targets[2]), 32, 740, 120+2*180+60-ui.SetSpriteHeight/2, g.MatchColors[2])
+	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[3]), 32, 960/2-180, 630, g.MatchColors[3])
+	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[4]), 32, 960/2, 630, g.MatchColors[4])
+	screen.DrawTextCenteredAtWithColors(string(g.Game.Targets[5]), 32, 960/2+180, 630, g.MatchColors[5])
 
 	if g.Game.Solved {
 		screen.DrawTextCenteredAt("You solved the puzzle!", 40, 960/2, 680, color.RGBA{90, 190, 90, 255})
 	}
+	screen.DrawText("New Game [Enter]", 24, 744, 670, color.Black)
 
 	for _, sprite := range g.Setsprites {
 		sprite.Draw(screen)
@@ -91,26 +102,32 @@ func (g *GameScene) Draw(screen *ui.ScaledScreen) {
 }
 
 func (g *GameScene) Update() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		g.Reset()
+	}
+
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		cursorX, cursorY := ui.AdjustedCursorPosition()
-		selectedIndex := -1
-		for i, setSprite := range g.Setsprites {
-			if setSprite.Contains(cursorX, cursorY) {
-				g.Stroke = ui.NewStroke(cursorX, cursorY, setSprite)
-				selectedIndex = i
-				break
+		if !g.Game.Solved {
+			cursorX, cursorY := ui.AdjustedCursorPosition()
+			selectedIndex := -1
+			for i, setSprite := range g.Setsprites {
+				if setSprite.Contains(cursorX, cursorY) {
+					g.Stroke = ui.NewStroke(cursorX, cursorY, setSprite)
+					selectedIndex = i
+					break
+				}
 			}
-		}
-		if selectedIndex != -1 {
-			g.Setsprites = append(g.Setsprites[:selectedIndex], g.Setsprites[selectedIndex+1:]...)
-		}
-		for _, loc := range g.Droplocations {
-			if loc.SetSprite != nil && loc.SetSprite.Contains(cursorX, cursorY) {
-				g.Stroke = ui.NewStroke(cursorX, cursorY, loc.SetSprite)
-				loc.SetSprite = nil
-				g.Game.SetSlot(loc.Index, "")
-				g.RecalculateMatches()
-				break
+			if selectedIndex != -1 {
+				g.Setsprites = append(g.Setsprites[:selectedIndex], g.Setsprites[selectedIndex+1:]...)
+			}
+			for _, loc := range g.Droplocations {
+				if loc.SetSprite != nil && loc.SetSprite.Contains(cursorX, cursorY) {
+					g.Stroke = ui.NewStroke(cursorX, cursorY, loc.SetSprite)
+					loc.SetSprite = nil
+					g.Game.SetSlot(loc.Index, "")
+					g.RecalculateMatches()
+					break
+				}
 			}
 		}
 	}
@@ -157,13 +174,24 @@ func (g *GameScene) Update() {
 		}
 	}
 }
+
 func (g *GameScene) RecalculateMatches() {
 	for i := range 6 {
 		for j, m := range g.Game.Matches[i] {
 			if m {
-				g.Colors[i][j] = color.RGBA{90, 190, 90, 255} // Green for matches
+				g.MatchColors[i][j] = color.RGBA{90, 190, 90, 255} // Green for matches
 			} else {
-				g.Colors[i][j] = color.RGBA{0, 0, 0, 255}
+				g.MatchColors[i][j] = color.RGBA{0, 0, 0, 255}
+			}
+		}
+	}
+	for i := range 9 {
+		g.ExtraColors[i] = make([]color.Color, len(g.Game.Extras[i]))
+		for j, m := range g.Game.Extras[i] {
+			if m {
+				g.ExtraColors[i][j] = color.RGBA{220, 90, 80, 255}
+			} else {
+				g.ExtraColors[i][j] = color.RGBA{0, 0, 0, 255}
 			}
 		}
 	}

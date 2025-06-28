@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/prizelobby/union-gridder/config"
 	"github.com/prizelobby/union-gridder/core"
@@ -66,10 +65,7 @@ func (g *EbitenGame) LayoutF(outsideWidth, outsideHeight float64) (screenWidth, 
 }
 
 func main() {
-	args := os.Args[1:]
-	audioContext := audio.NewContext(SAMPLE_RATE)
 	game := core.NewGame()
-	game.Reset()
 
 	// create a new text renderer and configure it
 	txtRenderer := etxt.NewRenderer()
@@ -85,19 +81,10 @@ func main() {
 		gameState:    MENU,
 	}
 	sm := scene.NewSceneManager()
-	menuScene := scene.NewMenuScene(audioContext)
-	creditsScene := scene.NewCreditsScene()
 	gameScene := scene.NewGameScene(game)
-	sm.AddScene("menu", menuScene)
-	sm.AddScene("credits", creditsScene)
 	sm.AddScene("game", gameScene)
 	g.SceneManager = sm
-
-	if len(args) > 0 {
-		g.SceneManager.SwitchToScene(args[0])
-	} else {
-		g.SceneManager.SwitchToScene("game")
-	}
+	g.SceneManager.SwitchToScene("game")
 
 	ebiten.SetWindowSize(GAME_WIDTH, GAME_HEIGHT)
 	ebiten.SetWindowTitle("Gridder Union")
