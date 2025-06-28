@@ -14,7 +14,3 @@ env GOOS=js GOARCH=wasm go build -o web/gridderunion.wasm github.com/prizelobby/
 
 ### Font
 [roboto-medium](https://fonts.google.com/specimen/Roboto) - [License](https://github.com/googlefonts/roboto/blob/main/LICENSE)
-
-### Sound
-[dice_03.wav - dermotte](https://freesound.org/people/dermotte/sounds/220741/) - [License](https://creativecommons.org/licenses/by/4.0/)
-[Little Guitar - Antti Luode](https://archive.org/details/anttisinstrumentals1019/anttisinstrumentals%2Blittleguitar.mp3) - [License](https://creativecommons.org/licenses/by/4.0/)
